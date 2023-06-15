@@ -1,0 +1,15 @@
+Dataset,Label,metric,nfolds,config,k-fold-avg
+dataset_40_sonar,Class,balanced_accuracy,10,default,0.6162626262626262
+dataset_40_sonar,Class,balanced_accuracy,10,hpo,0.7932070707070707
+dataset_53_heart-statlog,class,balanced_accuracy,10,default,0.7216666666666668
+dataset_53_heart-statlog,class,balanced_accuracy,10,hpo,0.8516666666666666
+oil_spill,class,balanced_accuracy,10,default,0.5
+oil_spill,class,balanced_accuracy,10,hpo,0.6521910112359551
+pc3,c,balanced_accuracy,10,default,0.5
+pc3,c,balanced_accuracy,10,hpo,0.5955553444782168
+pollen,binaryClass,balanced_accuracy,10,default,0.5038995034542315
+pollen,binaryClass,balanced_accuracy,10,hpo,0.5125553216753023
+electricity-normalized,class,balanced_accuracy,10,default,0.7695002851815447
+electricity-normalized,class,balanced_accuracy,10,hpo,0.7806402670630587
+eeg_eye_state,Class,balanced_accuracy,10,default,0.49987886125174263
+eeg_eye_state,Class,balanced_accuracy,10,hpo,0.5166098438990387

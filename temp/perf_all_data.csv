@@ -1,0 +1,2 @@
+Dataset,Label,metric,nfolds,config,k-fold-avg
+electricity-normalized,class,balanced_accuracy,10,default,0.8774265675338088

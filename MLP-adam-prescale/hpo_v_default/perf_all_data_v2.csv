@@ -1,0 +1,5 @@
+Dataset,Label,metric,nfolds,config,k-fold-avg
+electricity-normalized,class,balanced_accuracy,10,default,0.7695002851815447
+electricity-normalized,class,balanced_accuracy,10,hpo,0.7806402670630587
+eeg_eye_state,Class,balanced_accuracy,10,default,0.49987886125174263
+eeg_eye_state,Class,balanced_accuracy,10,hpo,0.5166098438990387
