@@ -211,10 +211,15 @@ def create_global_local_loss_surfaces(
 ):
     dlist = []
     lsurfs = [RF(n_estimators=100, criterion='mse') for r in run_csvs]
+    samples_nums = []
     for f, rf in zip(run_csvs, lsurfs):
         assert f.find('_full.csv') == -1 or f.find('_full_pysot.csv') == -1
         print(f'Processing {f} ...')
         df = pd.read_csv(f, header=None) if no_header else pd.read_csv(f)
+        sample_num = int(df.iloc[0, -1])
+        samples_nums.append(sample_num)
+        print(f"sample num: {sample_num}")
+        df = df.iloc[:, :-1]
         assert df.shape[1] == len(lst_hps) + 1
         print(f'- Size: {df.shape}')
         df = df.values
@@ -240,7 +245,7 @@ def create_global_local_loss_surfaces(
     y = 1. + gdf[:, -1]
     print(f'Fitting global surface with {X.shape} ...')
     gsurf = RF(n_estimators=100, criterion='mse').fit(X, y)
-    return lsurfs, gsurf
+    return lsurfs, gsurf, samples_nums
 
 
 def MPLM(x, lsurfs):
@@ -251,6 +256,15 @@ def MPLM(x, lsurfs):
 def APLM(x, lsurfs):
     preds = [rf.predict([x])[0] for rf in lsurfs]
     return np.mean(preds)
+
+
+def WAPLM(x, lsurfs, samples_nums):
+    """
+    Weighted Average Loss Surface, weighted according to data sample amount
+    """
+    preds = [rf.predict([x])[0] for rf in lsurfs]
+    # print(f'pred shape: {len(preds)}, sample_nums_len: {len(samples_nums)}')
+    return np.average(preds, weights=samples_nums)
 
 
 def SGM_U(x, gsurf):
@@ -307,6 +321,7 @@ def get_hp_suggestions(
         api_config,
         lsurfs,
         gsurf,
+        samples_nums,
         batch_size,
         n_iters,
         n_restarts,
@@ -319,9 +334,13 @@ def get_hp_suggestions(
             SGM,
             SGM_U,
             MPLM,
+            WAPLM,
             APLM,
     ]:
+        print(f"obj: {obj}, name: {obj.__name__}")
         surf = lsurfs if obj.__name__.find('locals') != -1 else gsurf
+        if obj is WAPLM:
+            surf = lsurfs
         opt = PySOTOptimizer(api_config)
         i = 0
         current_best = 1.
@@ -331,7 +350,10 @@ def get_hp_suggestions(
         while True:
             try:
                 X = opt.suggest(n_suggestions=batch_size)
-                y = [obj(np.array([xx[k] for k in lst_hps]), surf) for xx in X]
+                if obj is WAPLM:
+                    y = [obj(np.array([xx[k] for k in lst_hps]), surf, samples_nums) for xx in X]
+                else:
+                    y = [obj(np.array([xx[k] for k in lst_hps]), surf) for xx in X]
                 all_X += X
                 all_y += y
                 opt.observe(X, y)
@@ -501,7 +523,7 @@ if __name__ == '__main__':
     X, y = get_full_data(args.data_path, args.clabel, prescale=args.prescale_x)
 
     # Generate local/global loss surfaces
-    lsurfs, gsurf = create_global_local_loss_surfaces(
+    lsurfs, gsurf, samples_nums = create_global_local_loss_surfaces(
         run_csvs, hp_names, no_header=(not args.header),
         num_pairs=args.num_pairs_per_party, send_top=args.send_top,
     )
@@ -509,7 +531,8 @@ if __name__ == '__main__':
     # Evaluate default HP
     print(f'Default HP: {default_hp}')
     dhp_array = [default_hp[n] for n in hp_names]
-    default_pred_perf = test_objectives(lsurfs, gsurf, search_space, default_hp=dhp_array)
+    default_pred_perf = test_objectives(
+            lsurfs, gsurf, search_space, default_hp=dhp_array)
     print('Evaluating default HP on full data: ...')
     default_perf = evaluate_hp(
         default_hp, X, y, args.score_metric,
@@ -522,6 +545,7 @@ if __name__ == '__main__':
         search_space,
         lsurfs,
         gsurf,
+        samples_nums,
         args.batch_size,
         args.n_iters,
         args.n_restarts,
