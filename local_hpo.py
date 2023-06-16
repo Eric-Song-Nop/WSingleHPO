@@ -73,6 +73,7 @@ def execute_hpo(
                     best_score = obj
                 hp_score_pair = hp
                 hp_score_pair["label"] = obj
+                hp_score_pair["samples_num"] = y.shape[0]
                 with open(party_csv_path, "a", newline="") as csvfile:
                     writer = csv.DictWriter(csvfile, fieldnames=col_names)
                     writer.writerow(hp_score_pair)
@@ -81,7 +82,7 @@ def execute_hpo(
                     f"[{pname}]: [R{i+1}] HPO iters {j+1}/{hpo_niters} completed, "
                     f"best score: {best_score:.4f}"
                 )
-    best_score = -np.min(pd.read_csv(party_csv_path).values[:, -1])
+    best_score = -np.min(pd.read_csv(party_csv_path).values[:, -2])
     print(f"Completed HPO for {pname} with best {score_metric}: {best_score:.4f}")
     return party_csv_path, best_score
 
@@ -214,7 +215,7 @@ if __name__ == "__main__":
     hp_names, search_space, default_hp = get_search_space(method=args.method)
     X, y = get_full_data(args.data_path, args.clabel, prescale=args.prescale_x)
 
-    col_names = hp_names + ["label"]
+    col_names = hp_names + ["label"] + ["samples_num"]
 
     # Evaluate default HP
     print(f"Default HP: {default_hp}")
