@@ -1,8 +1,10 @@
 /dataset
+/datasets
 /HGB
-./MLP-adam-prescale 
-./NEW 
-./BACKUP*
-./SVM-prescale
-./__pycache__
-./run_*.sh
+/MLP-adam-prescale 
+/NEW 
+/BACKUP*
+/SVM-prescale
+/__pycache__
+/run_*.sh
+/print_*.py
